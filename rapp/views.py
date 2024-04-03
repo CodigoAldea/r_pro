@@ -8,6 +8,8 @@ from .forms import DynamicQuestionForm
 import joblib
 
 
+
+
 def load_model():
     try:
         with open('path/to/your/model.joblib', 'rb') as f: # fath for the joblib file 
