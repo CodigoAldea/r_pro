@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.models import User
 from django.contrib import messages
 
 
@@ -55,7 +56,33 @@ def login_user(request):
         return render(request, 'login.html')
     
 def register_user(request):
+    if request.method == "POST":
+        name = request.POST['name']
+        email = request.POST['email']
+        mobile = request.POST['mobile']
+        username = request.POST['username']
+        password1 = request.POST['password1']
+        password2 = request.POST['password2']
+        if name and email and mobile and username and password1 == password2:
+            if User.objects.filter(username=username).exists():
+                messages.error(request, 'Username is already taken.')
+                return redirect('register')
+            elif User.objects.filter(email=email).exists():
+                messages.error(request, 'Email is already registered.')
+                return redirect('register')
+            else:
+                user = User.objects.create_user(username=username, email=email, password=password1, first_name=name)
+                user.save()
+                user = authenticate(username=username, password= password1)
+                login(request, user)
+                messages.success(request, ("Registration Successful, you have been Loged in !!!"))
+                return redirect('home')
+        else:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('register')
+            
     return render(request, 'register.html')
 
 def logout_user(request):
-    return render(request, 'login.html')
+    logout(request)
+    return redirect('home')
