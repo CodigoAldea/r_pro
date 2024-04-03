@@ -10,14 +10,17 @@ import joblib
 
 def load_model():
     try:
-        with open('path/to/your/model.joblib', 'rb') as f:
+        with open('path/to/your/model.joblib', 'rb') as f: # fath for the joblib file 
             model = joblib.load(f)
         return model
     except FileNotFoundError:
         raise Exception('Model file not found. Please ensure the model exists.')
 # Create your views here.
 def calculate_depression_score(x):
-    pass
+    model = load_model()
+    depression_score = model.predict([[x]])[0]  # Assuming model accepts a single value for prediction
+    return depression_score
+    
 def home(request):
     return render(request, 'home.html')
 
