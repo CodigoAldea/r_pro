@@ -15,7 +15,7 @@
               <div class="container">
                 <div class="card mt-5">
                     <div class="card-body">
-                        <form method="post">
+                        {% comment %} <form method="post">
                             {% csrf_token %}
                             {% for i in que %}
                                 <div class="mb-3">                            
@@ -42,6 +42,13 @@
                                 </div>
                             {% endfor %}
                             <button type="submit" class="btn btn-primary">Next</button>
+                        </form> {% endcomment %}
+                        <h1>Question {{ question_num }}</h1>
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                            <input type="submit" value="Next">
+                            {{ form.current_question }}
                         </form>
                     </div>
                 </div>

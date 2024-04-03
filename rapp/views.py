@@ -2,44 +2,61 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.contrib import messages
-from rapp.models import Questions, quesA
+from rapp.models import Questions, Answer
+from .forms import DynamicQuestionForm
+
+import joblib
 
 
+def load_model():
+    try:
+        with open('path/to/your/model.joblib', 'rb') as f:
+            model = joblib.load(f)
+        return model
+    except FileNotFoundError:
+        raise Exception('Model file not found. Please ensure the model exists.')
 # Create your views here.
+def calculate_depression_score(x):
+    pass
 def home(request):
     return render(request, 'home.html')
 
 # questions and next questions , ocv logic for the video also has to save , 
-@login
+# @login
 def depressionque(request):
-    que = quesA.objects.all() # all the questions from the db to django
+    all_questions = Questions.objects.all().order_by('id')
+
     if request.method == 'POST':
-        ques = request.POST.get('ques')
-        option = request.POST.get('option')
-        
-        if option == quesA.objects.get(que = ques).option1 :
-            w = 0
-        elif option == quesA.objects.get(que = ques).option2 :
-            w = 1
-        elif option == quesA.objects.get(que = ques).option3 :
-            w = 2
-        elif option == quesA.objects.get(que = ques).option4 :
-            w = 3
-        else:
-            pass
-        
-        s = Questions.objects.create(user=login_user, questions=ques, option_text=option, weight=w) 
-        # pass the data to the AI Model
-        
-        return redirect('result')
-        
-    return render(request, 'depressionque.html', {'que':que})
+        current_question_num = int(request.POST.get('current_question')) + 1
+        next_questions = all_questions.filter(id__gt=current_question_num)
+
+        form = DynamicQuestionForm(request.POST, questions=all_questions[:current_question_num])
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
+            for question_id, answer in cleaned_data.items():
+                if question_id != 'current_question':
+                    question = Questions.objects.get(pk=int(question_id.split('_')[1]))
+                    weight = 0 if answer == question.option1 else 1 if answer == question.option2 else 2 if answer == question.option3 else 3
+                    Answer.objects.create(question=question, user=login_user, option_text=answer, weight=weight)  # Replace login_user with your authentication mechanism
+
+            if not next_questions:
+                return redirect('result')  # Pass all answers to AI model here
+            return redirect('depressionque',question_num=current_question_num)
+    else:
+        if not all_questions:
+            # Handle the case where there are no questions
+            return render(request, 'depressionque.html', {'message': 'No questions available'})
+        form = DynamicQuestionForm(questions=[all_questions[0]])
+        question_num = 1
+
+    context = {'form': form, 'question_num': question_num}
+    return render(request, 'depressionque.html', context)
 
 #score, most common emotion(images) from the video, (lifestyle change (text), information, causes ) : link
 def result(request):
-    # call the AI model and get the depression_score
-    # Logic for calculating depression score and displaying 
-    depression_score = 0
+    total_weight = sum(answer.weight for answer in Answer.objects.filter(user=request.user))
+                # Pass total_weight to your logic for calculating depression score (replace with your implementation)
+    depression_score = calculate_depression_score(total_weight)
     if 0 < depression_score <= 25:
         context = {'depression_score': depression_score, 'severity': 'No depression'}
     elif 25 < depression_score <= 50:
