@@ -10,7 +10,7 @@ urlpatterns = [
     path('information/',information,name='information'),
     path('lifestyle_changes/',lifestyle_changes,name='lifestyle'),
     path('result/',result,name='result'),
-    path('symp/',symptoms,name='symptoms'),
+    # path('symp/',symptoms,name='symptoms'),
     path('calming_video/',calming_video,name='calming_video'),
     
     path('login/',login_user, name='login'), # url for login

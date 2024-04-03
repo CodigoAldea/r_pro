@@ -8,9 +8,10 @@ class client(models.Model):
     gender = models.CharField(max_length=50)
     
 class Questions(models.Model):
+    client=models.ForeignKey(client, verbose_name=_(""), on_delete=models.CASCADE)
     questions = models.CharField(max_length=50)
     option_text = models.CharField(max_length=50)
-    score = models.IntegerField()
+    weight = models.IntegerField()
     
 class quesA(models.Model):
     que = models.CharField( max_length=500)
