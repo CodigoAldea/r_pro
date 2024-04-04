@@ -20,3 +20,7 @@ class Answer(models.Model):
     question = models.ForeignKey(Questions, on_delete=models.CASCADE)
     option_text = models.CharField(max_length=50)
     weight = models.IntegerField()
+    
+class dscore(models.Model):
+    client=models.ForeignKey(client, on_delete=models.CASCADE)
+    score = models.IntegerField()

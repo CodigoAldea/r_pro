@@ -7,7 +7,7 @@ class DynamicQuestionForm(forms.Form):
         self.questions = questions
         for question in questions:
             self.fields[f'question_{question.id}'] = forms.ChoiceField(
-                label=question.text,
+                label=Questions.text,
                 choices=[(question.option1, question.option1),
                          (question.option2, question.option2),
                          (question.option3, question.option3),

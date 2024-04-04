@@ -2,13 +2,10 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.contrib import messages
-from rapp.models import Questions, Answer
+from rapp.models import Questions, Answer, dscore
 from .forms import DynamicQuestionForm
 
 import joblib
-
-
-
 
 def load_model():
     try:
@@ -42,8 +39,13 @@ def depressionque(request):
                 if question_id != 'current_question':
                     question = Questions.objects.get(pk=int(question_id.split('_')[1]))
                     weight = 0 if answer == question.option1 else 1 if answer == question.option2 else 2 if answer == question.option3 else 3
-                    Answer.objects.create(question=question, user=login_user, option_text=answer, weight=weight)  # Replace login_user with your authentication mechanism
-
+                    Answer.objects.create(question=question, client=login_user, option_text=answer, weight=weight)  # Replace login_user with your authentication mechanism
+                    
+                    total_weight = sum(answer.weight for answer in Answer.objects.filter(client=request.user))
+                    depression_score = calculate_depression_score(total_weight)
+                    
+                    s= dscore.objects.create(client=login_user, score = depression_score)
+                    
             if not next_questions:
                 return redirect('result')  # Pass all answers to AI model here
             return redirect('depressionque',question_num=current_question_num)
@@ -59,9 +61,7 @@ def depressionque(request):
 
 #score, most common emotion(images) from the video, (lifestyle change (text), information, causes ) : link
 def result(request):
-    total_weight = sum(answer.weight for answer in Answer.objects.filter(user=request.user))
-                # Pass total_weight to your logic for calculating depression score (replace with your implementation)
-    depression_score = calculate_depression_score(total_weight)
+    depression_score= dscore.objects.get(client=login_user).score
     if 0 < depression_score <= 25:
         context = {'depression_score': depression_score, 'severity': 'No depression'}
     elif 25 < depression_score <= 50:
@@ -91,6 +91,7 @@ def about_us(request):
     return render(request, 'about_us.html')
 
 def causes(request):
+    depression_score= dscore.objects.get(client=login_user).score
     # Logic for handling causes page
     return render(request, 'causes.html')
 
